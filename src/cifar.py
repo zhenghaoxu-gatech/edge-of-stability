@@ -8,7 +8,7 @@ from torch import Tensor
 import torch.nn.functional as F
 
 # DATASETS_FOLDER = os.environ["DATASETS"]
-DATASETS_FOLDER = "../dataset"
+DATASETS_FOLDER = "./dataset"
 
 def center(X_train: np.ndarray, X_test: np.ndarray):
     mean = X_train.mean(0)
