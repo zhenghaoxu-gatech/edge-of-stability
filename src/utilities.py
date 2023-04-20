@@ -13,11 +13,13 @@ import os
 
 # the default value for "physical batch size", which is the largest batch size that we try to put on the GPU
 DEFAULT_PHYS_BS = 1000
+RESULTS_DIR = "../results/"
 
 
 def get_gd_directory(dataset: str, lr: float, arch_id: str, seed: int, opt: str, loss: str, beta: float = None):
     """Return the directory in which the results should be saved."""
-    results_dir = os.environ["RESULTS"]
+    # results_dir = os.environ["RESULTS"]
+    results_dir = RESULTS_DIR
     directory = f"{results_dir}/{dataset}/{arch_id}/seed_{seed}/{loss}/{opt}/"
     if opt == "gd":
         return f"{directory}/lr_{lr}"
@@ -27,13 +29,13 @@ def get_gd_directory(dataset: str, lr: float, arch_id: str, seed: int, opt: str,
 
 def get_flow_directory(dataset: str, arch_id: str, seed: int, loss: str, tick: float):
     """Return the directory in which the results should be saved."""
-    results_dir = os.environ["RESULTS"]
+    results_dir = RESULTS_DIR
     return f"{results_dir}/{dataset}/{arch_id}/seed_{seed}/{loss}/flow/tick_{tick}"
 
 
 def get_modified_flow_directory(dataset: str, arch_id: str, seed: int, loss: str, gd_lr: float, tick: float):
     """Return the directory in which the results should be saved."""
-    results_dir = os.environ["RESULTS"]
+    results_dir = RESULTS_DIR
     return f"{results_dir}/{dataset}/{arch_id}/seed_{seed}/{loss}/modified_flow_lr_{gd_lr}/tick_{tick}"
 
 
