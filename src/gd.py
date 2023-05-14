@@ -1,4 +1,5 @@
 from os import makedirs
+from datetime import datetime
 
 import torch
 from torch.nn.utils import parameters_to_vector
@@ -27,7 +28,34 @@ def main(dataset: str, arch_id: str, loss: str, opt: str, lr: float, max_steps: 
     loss_fn, acc_fn = get_loss_and_acc(loss)
 
     torch.manual_seed(seed)
-    network = load_architecture(arch_id, dataset).cuda()
+    network = load_architecture(arch_id, dataset)
+
+    # model_path = "./initial.pth"
+    # if not os.path.exists(model_path):
+    #     torch.save(network.state_dict(), model_path)
+    # else: 
+    #     network.load_state_dict(torch.load(model_path))
+
+    for name, parameters in network.named_parameters():
+        idx = name.split('.')[0]
+        label = name.split('.')[1]
+        # print(name, ':', parameters.size(), ':', parameters.norm())
+        if label == 'bias':
+            continue
+            if idx == '1':
+                parameters.data = parameters.data / parameters.norm() * 2.0
+            if idx == '3':
+                parameters.data = parameters.data / parameters.norm() * 10.0
+        else: 
+            # continue
+            if idx == '1':
+                parameters.data = parameters.data / parameters.norm() * 1.0
+            if idx == '3':
+                parameters.data = parameters.data / parameters.norm() * 5.0
+        # parameters.data = parameters.data / parameters.norm() * 7
+        # parameters.data = parameters.data
+    # exit()
+    network.cuda()
 
     torch.manual_seed(7)
     projectors = torch.randn(nproj, len(parameters_to_vector(network.parameters())))

@@ -15,7 +15,7 @@ def get_activation(activation: str):
     elif activation == 'hardtanh':
         return torch.nn.Hardtanh()
     elif activation == 'leaky_relu':
-        return torch.nn.LeakyReLU()
+        return torch.nn.LeakyReLU(1.0/5.5)
     elif activation == 'selu':
         return torch.nn.SELU()
     elif activation == 'elu':
@@ -170,6 +170,14 @@ def load_architecture(arch_id: str, dataset_name: str) -> nn.Module:
     # ======= vary depth =======
     elif arch_id == 'fc-tanh-depth1':
         return fully_connected_net(dataset_name, [200], 'tanh', bias=True)
+    elif arch_id == 'fc-relu-depth1':
+        return fully_connected_net(dataset_name, [200], 'relu', bias=True)
+    elif arch_id == 'fc-leaky_relu-depth1':
+        return fully_connected_net(dataset_name, [200], 'leaky_relu', bias=True)
+    elif arch_id == 'fc-elu-depth1':
+        return fully_connected_net(dataset_name, [200], 'elu', bias=True)
+    
+    
     elif arch_id == 'fc-tanh-depth2':
         return fully_connected_net(dataset_name, [200, 200], 'tanh', bias=True)
     elif arch_id == 'fc-tanh-depth3':

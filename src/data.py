@@ -8,7 +8,8 @@ from synthetic import make_chebyshev_dataset, make_linear_dataset
 
 DATASETS = [
     "cifar10", "cifar10-1k", "cifar10-2k", "cifar10-5k", "cifar10-10k", "cifar10-20k", "chebyshev-3-20",
-    "chebyshev-4-20", "chebyshev-5-20", "linear-50-50"
+    "chebyshev-4-20", "chebyshev-5-20", "linear-50-50",
+    "cifar10-5h"
 ]
 
 def flatten(arr: np.ndarray):
@@ -52,6 +53,9 @@ def take_first(dataset: TensorDataset, num_to_keep: int):
 def load_dataset(dataset_name: str, loss: str) -> (TensorDataset, TensorDataset):
     if dataset_name == "cifar10":
         return load_cifar(loss)
+    elif dataset_name == "cifar10-5h":
+        train, test = load_cifar(loss)
+        return take_first(train, 500), test
     elif dataset_name == "cifar10-1k":
         train, test = load_cifar(loss)
         return take_first(train, 1000), test
