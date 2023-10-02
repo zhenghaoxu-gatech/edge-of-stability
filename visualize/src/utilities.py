@@ -15,6 +15,7 @@ import os
 # the default value for "physical batch size", which is the largest batch size that we try to put on the GPU
 DEFAULT_PHYS_BS = 1000
 RESULTS_DIR = "./results/"
+DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def get_gd_directory(dataset: str, lr: float, arch_id: str, seed: int, opt: str, loss: str, beta: float = None, width: int = 200, bias: bool = True, init_bias: str = "b_init", init_weight: str = "w_init", batch_norm: bool = False):
@@ -67,7 +68,7 @@ def iterate_dataset(dataset: Dataset, batch_size: int):
     """Iterate through a dataset, yielding batches of data."""
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
     for (batch_X, batch_y) in loader:
-        yield batch_X.cuda(), batch_y.cuda()
+        yield batch_X.to(DEVICE), batch_y.to(DEVICE)
 
 
 def compute_losses(network: nn.Module, loss_functions: List[nn.Module], dataset: Dataset,
@@ -101,8 +102,8 @@ def compute_hvp(network: nn.Module, loss_fn: nn.Module,
     """Compute a Hessian-vector product."""
     p = len(parameters_to_vector(network.parameters()))
     n = len(dataset)
-    hvp = torch.zeros(p, dtype=torch.float, device='cuda')
-    vector = vector.cuda()
+    hvp = torch.zeros(p, dtype=torch.float, device=DEVICE)
+    vector = vector.to(DEVICE)
     for (X, y) in iterate_dataset(dataset, physical_batch_size):
         loss = loss_fn(network(X), y) / n
         grads = torch.autograd.grad(loss, inputs=network.parameters(), create_graph=True)
@@ -117,7 +118,7 @@ def lanczos(matrix_vector, dim: int, neigs: int):
     (which we can access via matrix-vector products). """
 
     def mv(vec: np.ndarray):
-        gpu_vec = torch.tensor(vec, dtype=torch.float).cuda()
+        gpu_vec = torch.tensor(vec, dtype=torch.float).to(DEVICE)
         return matrix_vector(gpu_vec)
 
     operator = LinearOperator((dim, dim), matvec=mv)

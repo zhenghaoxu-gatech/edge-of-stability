@@ -12,6 +12,8 @@ from utilities import get_flow_directory, get_loss_and_acc, compute_losses, \
     save_files, save_files_final, AtParams, compute_gradient, get_hessian_eigenvalues, DEFAULT_PHYS_BS
 from data import load_dataset, take_first
 
+DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 
 def rk_step(network: nn.Module, loss_fn: nn.Module, dataset: Dataset, step_size: float,
             physical_batch_size: int = DEFAULT_PHYS_BS):
@@ -58,7 +60,7 @@ def main(dataset: str, arch_id: str, loss: str, max_time: float, tick: float, ne
     max_steps = int(max_time / tick)
 
     torch.manual_seed(seed)
-    network = load_architecture(arch_id, dataset).cuda()
+    network = load_architecture(arch_id, dataset).to(DEVICE)
 
     torch.manual_seed(7)
     projectors = torch.randn(nproj, len(parameters_to_vector(network.parameters())))

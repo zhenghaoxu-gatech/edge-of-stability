@@ -9,6 +9,7 @@ from vgg import vgg11_nodropout, vgg11_nodropout_bn
 from data import num_classes, num_input_channels, image_size, num_pixels
 
 _CONV_OPTIONS = {"kernel_size": 3, "padding": 1, "stride": 1}
+DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class CubicReLU(nn.Module):
     __constants__ = ['inplace']
@@ -171,7 +172,7 @@ def make_deeplinear(L: int, d: int, seed=8):
         nn.init.xavier_normal_(layer.weight)
         layers.append(layer)
     network = nn.Sequential(*layers)
-    return network.cuda()
+    return network.to(DEVICE)
 
 def make_one_layer_network(h=10, seed=0, activation='tanh', sigma_w=1.9):
     torch.manual_seed(seed)
