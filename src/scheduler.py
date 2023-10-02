@@ -230,7 +230,7 @@ lr_list_mse_cubicrelu_outer = {
     "w1_6_w2_20": [0.000005, 0.00001, 0.00005],
     }
 lr_list_huber_cubicrelu_outer = {
-    "w1_6_w2_20": [0.000005, 0.00001, 0.00005],
+    "w1_6_w2_20": [0.000005, 0.00001, 0.00002],
     }
 
 
@@ -258,12 +258,12 @@ lr_list_huber_cubicrelu_outer = {
     #     os.system(f"python src/gd.py cifar10-1k fc-relu-depth1  mse {lr} 20000 --batch_norm --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")  
 
 for weight in ["w1_6_w2_20"]:
-    for lr in [0.000005]:
+    # for lr in [0.000005]:
     # for lr in lr_list_mse_cubicrelu_outer[weight]:
-        os.system(f"python src/gd.py cifar10-1k fc-cubic_relu-outer  mse {lr} 5000 --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")  
+        # os.system(f"python src/gd.py cifar10-1k fc-cubic_relu-outer  mse {lr} 5000 --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")  
 
-    # for lr in lr_list_huber_cubicrelu_outer[weight]:
-        # os.system(f"python src/gd.py cifar10-1k fc-cubic_relu-outer  huber {lr} 5000 --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")  
+    for lr in lr_list_huber_cubicrelu_outer[weight]:
+        os.system(f"python src/gd.py cifar10-1k fc-cubic_relu-outer  huber {lr} 5000 --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")  
 
 '''
 Extension

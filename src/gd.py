@@ -92,7 +92,8 @@ def main(dataset: str, arch_id: str, loss: str, opt: str, lr: float, max_steps: 
                             w1_list[step // eig_freq] = parameters.norm()
                         if idx == ('4' if batch_norm else '3'):
                             w2_list[step // eig_freq] = parameters.norm()
-            # print("eigenvalues: ", eigs[step//eig_freq, :], "\t w1: ", w1_list[step // eig_freq], "\t w2: ", w2_list[step // eig_freq])
+            if step == 0:
+                print("eigenvalues: ", eigs[step//eig_freq, :], "\t w1: ", w1_list[step // eig_freq], "\t w2: ", w2_list[step // eig_freq])
             # exit()
 
         if iterate_freq != -1 and step % iterate_freq == 0:
@@ -107,6 +108,9 @@ def main(dataset: str, arch_id: str, loss: str, opt: str, lr: float, max_steps: 
         # print(f"{step}\t{train_loss[step]:.3f}\t{train_acc[step]:.3f}\t{test_loss[step]:.3f}\t{test_acc[step]:.3f}")
 
         if (loss_goal != None and train_loss[step] < loss_goal) or (acc_goal != None and train_acc[step] > acc_goal):
+            break
+        if train_loss[step] > 1e6:
+            print('Diverge!')
             break
 
         optimizer.zero_grad()
