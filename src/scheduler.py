@@ -220,18 +220,24 @@ lr_list_huber_cubicrelu = {
     "w1_6_w2_20": [0.0001, 0.0003, 0.0005, 0.0007, 0.0009],
     }
 
-lr_list_mse_cubicrelu_double = {
-    "w1_6_w2_15": [0.000005, 0.00001, 0.000015],
+# lr_list_mse_cubicrelu_double = {
+#     "w1_6_w2_15": [0.000005, 0.00001, 0.000015],
+#     }
+# lr_list_huber_cubicrelu_double = {
+#     "w1_6_w2_15": [0.00006, 0.00009],
+#     }
+lr_list_mse_cubicrelu_outer = {
+    "w1_6_w2_20": [0.000005, 0.00001, 0.00005],
     }
-lr_list_huber_cubicrelu_double = {
-    "w1_6_w2_15": [0.00006, 0.00009],
+lr_list_huber_cubicrelu_outer = {
+    "w1_6_w2_20": [0.000005, 0.00001, 0.00005],
     }
 
 
 
-for weight in ["w1_6_w2_20"]:
-    for lr in lr_list_mse_relu[weight]: # must over 2/eta
-        os.system(f"python src/gd.py cifar10-1k fc-relu-depth1  mse {lr} 5000 --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")
+# for weight in ["w1_6_w2_20"]:
+    # for lr in lr_list_mse_relu[weight]: # must over 2/eta
+        # os.system(f"python src/gd.py cifar10-1k fc-relu-depth1  mse {lr} 5000 --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")
     
     # for lr in lr_list_mse_cubicrelu[weight]:
         # os.system(f"python src/gd.py cifar10-1k fc-cubic_relu-depth1  mse {lr} 100000 --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")  
@@ -239,24 +245,24 @@ for weight in ["w1_6_w2_20"]:
     # for lr in lr_list_huber_cubicrelu[weight]:
     #     os.system(f"python src/gd.py cifar10-1k fc-cubic_relu-depth1  huber {lr} 20000 --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")  
     
-    for lr in lr_list_mse_tanh[weight]:
-        os.system(f"python src/gd.py cifar10-1k fc-tanh-depth1  mse {lr} 20000 --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")
+    # for lr in lr_list_mse_tanh[weight]:
+        # os.system(f"python src/gd.py cifar10-1k fc-tanh-depth1  mse {lr} 20000 --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")
 
     # for lr in lr_list_huber_relu[weight]:
         # os.system(f"python src/gd.py cifar10-1k fc-relu-depth1  huber {lr} 20000 --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")
 
-    for lr in lr_list_huber_tanh[weight]:
-        os.system(f"python src/gd.py cifar10-1k fc-tanh-depth1  huber {lr} 5000 --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")
+    # for lr in lr_list_huber_tanh[weight]:
+        # os.system(f"python src/gd.py cifar10-1k fc-tanh-depth1  huber {lr} 5000 --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")
 
     # for lr in lr_list_mse_relu_BN[weight]:
     #     os.system(f"python src/gd.py cifar10-1k fc-relu-depth1  mse {lr} 20000 --batch_norm --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")  
 
-# for weight in ["w1_6_w2_15"]:
-    # for lr in lr_list_mse_cubicrelu_double[weight]:
-        # os.system(f"python src/gd.py cifar10-1k fc-cubic_relu-double  mse {lr} 20000 --neigs 1  --eig_freq 400 --width 200 --init_weight {weight}")  
+for weight in ["w1_6_w2_20"]:
+    for lr in lr_list_mse_cubicrelu_outer[weight]:
+        os.system(f"python src/gd.py cifar10-1k fc-cubic_relu-outer  mse {lr} 5000 --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")  
 
-#     for lr in lr_list_huber_cubicrelu_double[weight]:
-#         os.system(f"python src/gd.py cifar10-1k fc-cubic_relu-double  huber {lr} 20000 --neigs 1  --eig_freq 400 --width 200 --init_weight {weight}")  
+    for lr in lr_list_huber_cubicrelu_outer[weight]:
+        os.system(f"python src/gd.py cifar10-1k fc-cubic_relu-outer  huber {lr} 5000 --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")  
 
 '''
 Extension
