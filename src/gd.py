@@ -58,7 +58,7 @@ def main(dataset: str, arch_id: str, loss: str, opt: str, lr: float, max_steps: 
                 parameters.data = parameters.data / parameters.norm().item() * float(w1)
             if idx == ('4' if batch_norm else '3'):
                 parameters.data = parameters.data / parameters.norm().item() * float(w2)
-        # print(name, ':', parameters.size(), ':', parameters.norm().item())
+        print(name, ':', parameters.size(), ':', parameters.norm().item())
     # exit()
     network.to(DEVICE)
 
