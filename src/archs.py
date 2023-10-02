@@ -113,7 +113,9 @@ def cubic_net_outer(dataset_name: str, widths: List[int], activation: str, bias:
     modules.append(nn.Linear(widths[-1], num_classes(dataset_name), bias=bias))
     modules.append(get_activation(activation))
     lastlayer = nn.Linear(num_classes(dataset_name), num_classes(dataset_name), bias=bias)
-    torch.nn.init.constant_(lastlayer.weight, 0.1)
+    torch.nn.init.constant_(lastlayer.weight, 0.5)
+    lastlayer.weight = torch.bernoulli(lastlayer.weight)
+    lastlayer.weight = lastlayer * 2 - 1
     lastlayer.requires_grad_(False)
     modules.append(lastlayer)
     return nn.Sequential(*modules)
