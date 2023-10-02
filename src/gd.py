@@ -15,6 +15,8 @@ from data import load_dataset, take_first, DATASETS
 import os
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
+cuda = False
+
 def main(dataset: str, arch_id: str, loss: str, opt: str, lr: float, max_steps: int, neigs: int = 0,
          physical_batch_size: int = 1000, eig_freq: int = -1, iterate_freq: int = -1, save_freq: int = -1,
          save_model: bool = False, beta: float = 0.0, nproj: int = 0,
@@ -59,7 +61,8 @@ def main(dataset: str, arch_id: str, loss: str, opt: str, lr: float, max_steps: 
                 parameters.data = parameters.data / parameters.norm().item() * float(w2)
         # print(name, ':', parameters.size(), ':', parameters.norm().item())
     # exit()
-    network.cuda()
+    if cuda:
+        network.cuda()
 
     torch.manual_seed(7)
     projectors = torch.randn(nproj, len(parameters_to_vector(network.parameters())))
@@ -110,7 +113,10 @@ def main(dataset: str, arch_id: str, loss: str, opt: str, lr: float, max_steps: 
 
         optimizer.zero_grad()
         for (X, y) in iterate_dataset(train_dataset, physical_batch_size):
-            loss = loss_fn(network(X.cuda()), y.cuda()) / len(train_dataset)
+            if cuda:
+                loss = loss_fn(network(X.cuda()), y.cuda()) / len(train_dataset)
+            else: 
+                loss = loss_fn(network(X), y) / len(train_dataset)
             loss.backward()
         optimizer.step()
 
