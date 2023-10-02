@@ -103,7 +103,7 @@ def cubic_net_outer(dataset_name: str, widths: List[int], activation: str, bias:
             modules.extend([
                 nn.Linear(prev_width, widths[l], bias=bias),
                 nn.BatchNorm1d(num_features=widths[l], affine=False),
-                # get_activation(activation),
+                nn.Identity()
             ])
         else:
             modules.extend([
