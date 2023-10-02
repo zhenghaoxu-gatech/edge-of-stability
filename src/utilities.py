@@ -143,7 +143,7 @@ def compute_gradient(network: nn.Module, loss_fn: nn.Module,
                      dataset: Dataset, physical_batch_size: int = DEFAULT_PHYS_BS):
     """ Compute the gradient of the loss function at the current network parameters. """
     p = len(parameters_to_vector(filter(lambda z: z.requires_grad, network.parameters())))
-    average_gradient = torch.zeros(p, device='cuda')
+    average_gradient = torch.zeros(p, device=DEVICE)
     for (X, y) in iterate_dataset(dataset, physical_batch_size):
         batch_loss = loss_fn(network(X), y) / len(dataset)
         batch_gradient = parameters_to_vector(torch.autograd.grad(batch_loss, inputs=filter(lambda z: z.requires_grad, network.parameters())))
