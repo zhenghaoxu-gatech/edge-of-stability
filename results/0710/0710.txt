@@ -1,0 +1,3 @@
+- progressive: shorten frequency?
+- Compare the settings: Jason Lee, Jian Li
+- change to MNIST, compared to CIFAR

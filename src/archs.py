@@ -2,6 +2,7 @@ from typing import List
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from resnet_cifar import resnet32
 from vgg import vgg11_nodropout, vgg11_nodropout_bn
@@ -9,9 +10,26 @@ from data import num_classes, num_input_channels, image_size, num_pixels
 
 _CONV_OPTIONS = {"kernel_size": 3, "padding": 1, "stride": 1}
 
+class CubicReLU(nn.Module):
+    __constants__ = ['inplace']
+    inplace: bool
+
+    def __init__(self, inplace: bool = False):
+        super().__init__()
+        self.inplace = inplace
+
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        return F.relu(input.pow(3), inplace=self.inplace)
+
+    def extra_repr(self) -> str:
+        inplace_str = 'inplace=True' if self.inplace else ''
+        return inplace_str
+
 def get_activation(activation: str):
     if activation == 'relu':
         return torch.nn.ReLU()
+    elif activation == 'cubic_relu':
+        return CubicReLU()
     elif activation == 'hardtanh':
         return torch.nn.Hardtanh()
     elif activation == 'leaky_relu':
@@ -36,15 +54,66 @@ def get_pooling(pooling: str):
         return torch.nn.AvgPool2d((2, 2))
 
 
-def fully_connected_net(dataset_name: str, widths: List[int], activation: str, bias: bool = True) -> nn.Module:
+def fully_connected_net(dataset_name: str, widths: List[int], activation: str, bias: bool = True, batch_norm: bool = False) -> nn.Module:
     modules = [nn.Flatten()]
     for l in range(len(widths)):
         prev_width = widths[l - 1] if l > 0 else num_pixels(dataset_name)
-        modules.extend([
-            nn.Linear(prev_width, widths[l], bias=bias),
-            get_activation(activation),
-        ])
+        if batch_norm:
+            modules.extend([
+                nn.Linear(prev_width, widths[l], bias=bias),
+                nn.BatchNorm1d(num_features=widths[l], affine=False),
+                get_activation(activation),
+            ])
+        else:
+            modules.extend([
+                nn.Linear(prev_width, widths[l], bias=bias),
+                get_activation(activation),
+            ])
     modules.append(nn.Linear(widths[-1], num_classes(dataset_name), bias=bias))
+    return nn.Sequential(*modules)
+
+def cubic_net(dataset_name: str, widths: List[int], activation: str, bias: bool = True, batch_norm: bool = False) -> nn.Module:
+    modules = [nn.Flatten()]
+    for l in range(len(widths)):
+        prev_width = widths[l - 1] if l > 0 else num_pixels(dataset_name)
+        if batch_norm:
+            modules.extend([
+                nn.Linear(prev_width, widths[l], bias=bias),
+                nn.BatchNorm1d(num_features=widths[l], affine=False),
+                get_activation('relu'),
+            ])
+        else:
+            modules.extend([
+                nn.Linear(prev_width, widths[l], bias=bias),
+                get_activation('relu'),
+            ])
+    modules.append(nn.Linear(widths[-1], num_classes(dataset_name), bias=bias))
+    modules.append(get_activation(activation))
+    lastlayer = nn.Linear(num_classes(dataset_name), num_classes(dataset_name), bias=bias)
+    lastlayer.requires_grad_(False)
+    modules.append(lastlayer)
+    return nn.Sequential(*modules)
+
+def cubic_net_outer(dataset_name: str, widths: List[int], activation: str, bias: bool = True, batch_norm: bool = False) -> nn.Module:
+    modules = [nn.Flatten()]
+    for l in range(len(widths)):
+        prev_width = widths[l - 1] if l > 0 else num_pixels(dataset_name)
+        if batch_norm:
+            modules.extend([
+                nn.Linear(prev_width, widths[l], bias=bias),
+                nn.BatchNorm1d(num_features=widths[l], affine=False),
+                get_activation(activation),
+            ])
+        else:
+            modules.extend([
+                nn.Linear(prev_width, widths[l], bias=bias),
+                get_activation(activation),
+            ])
+    modules.append(nn.Linear(widths[-1], num_classes(dataset_name), bias=bias))
+    modules.append(get_activation(activation))
+    lastlayer = nn.Linear(num_classes(dataset_name), num_classes(dataset_name), bias=bias)
+    lastlayer.requires_grad_(False)
+    modules.append(lastlayer)
     return nn.Sequential(*modules)
 
 
@@ -116,7 +185,7 @@ def make_one_layer_network(h=10, seed=0, activation='tanh', sigma_w=1.9):
     return network
 
 
-def load_architecture(arch_id: str, dataset_name: str) -> nn.Module:
+def load_architecture(arch_id: str, dataset_name: str, width: int, bias: bool, batch_norm: bool) -> nn.Module:
     #  ======   fully-connected networks =======
     if arch_id == 'fc-relu':
         return fully_connected_net(dataset_name, [200, 200], 'relu', bias=True)
@@ -169,13 +238,20 @@ def load_architecture(arch_id: str, dataset_name: str) -> nn.Module:
 
     # ======= vary depth =======
     elif arch_id == 'fc-tanh-depth1':
-        return fully_connected_net(dataset_name, [200], 'tanh', bias=True)
+        return fully_connected_net(dataset_name, [width], 'tanh', bias=bias, batch_norm=batch_norm)
     elif arch_id == 'fc-relu-depth1':
-        return fully_connected_net(dataset_name, [200], 'relu', bias=True)
+        return fully_connected_net(dataset_name, [width], 'relu', bias=bias, batch_norm=batch_norm)
     elif arch_id == 'fc-leaky_relu-depth1':
-        return fully_connected_net(dataset_name, [200], 'leaky_relu', bias=True)
+        return fully_connected_net(dataset_name, [width], 'leaky_relu', bias=bias, batch_norm=batch_norm)
+    elif arch_id == 'fc-cubic_relu-depth1':
+        return fully_connected_net(dataset_name, [width], 'cubic_relu', bias=bias, batch_norm=batch_norm)
+    elif arch_id == 'fc-cubic_relu-double':
+        return cubic_net(dataset_name, [width], 'cubic_relu', bias=bias, batch_norm=batch_norm)
+    elif arch_id == 'fc-cubic_relu-outer':
+        return cubic_net_outer(dataset_name, [width], 'cubic_relu', bias=bias, batch_norm=batch_norm)
+        # return fully_connected_net(dataset_name, [width], 'cubic_relu', bias=bias, batch_norm=batch_norm)
     elif arch_id == 'fc-elu-depth1':
-        return fully_connected_net(dataset_name, [200], 'elu', bias=True)
+        return fully_connected_net(dataset_name, [width], 'elu', bias=bias, batch_norm=batch_norm)
     
     
     elif arch_id == 'fc-tanh-depth2':

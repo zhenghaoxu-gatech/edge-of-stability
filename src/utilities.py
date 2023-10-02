@@ -9,6 +9,7 @@ from torch.nn.utils import parameters_to_vector, vector_to_parameters
 from torch.optim import SGD
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import Dataset, DataLoader
+import torch.nn.functional as F
 import os
 
 # the default value for "physical batch size", which is the largest batch size that we try to put on the GPU
@@ -16,15 +17,17 @@ DEFAULT_PHYS_BS = 1000
 RESULTS_DIR = "./results/"
 
 
-def get_gd_directory(dataset: str, lr: float, arch_id: str, seed: int, opt: str, loss: str, beta: float = None):
+def get_gd_directory(dataset: str, lr: float, arch_id: str, seed: int, opt: str, loss: str, beta: float = None, width: int = 200, bias: bool = True, init_bias: str = "b_init", init_weight: str = "w_init", batch_norm: bool = False):
     """Return the directory in which the results should be saved."""
     # results_dir = os.environ["RESULTS"]
     results_dir = RESULTS_DIR
-    directory = f"{results_dir}/{dataset}/{arch_id}/seed_{seed}/{loss}/{opt}/"
+    directory = f"{results_dir}/{dataset}/{arch_id}/seed_{seed}/{loss}" if not batch_norm else f"{results_dir}/{dataset}/{arch_id}_BN/seed_{seed}/{loss}"
     if opt == "gd":
-        return f"{directory}/lr_{lr}"
-    elif opt == "polyak" or opt == "nesterov":
-        return f"{directory}/lr_{lr}_beta_{beta}"
+        return f"{directory}/gd/width_{width}_{init_weight}_{init_bias if bias else 'nobias'}/lr_{lr}"
+    elif opt == "gd_model":
+        return f"{directory}/gd/width_{width}_{init_weight}_{init_bias if bias else 'nobias'}"
+    # elif opt == "polyak" or opt == "nesterov":
+    #     return f"{directory}/lr_{lr}_beta_{beta}"
 
 
 def get_flow_directory(dataset: str, arch_id: str, seed: int, loss: str, tick: float):
@@ -84,6 +87,10 @@ def get_loss_and_acc(loss: str):
     """Return modules to compute the loss and accuracy.  The loss module should be "sum" reduction. """
     if loss == "mse":
         return SquaredLoss(), SquaredAccuracy()
+    elif loss == "huber":
+        return nn.HuberLoss(reduction='sum', delta=1), SquaredAccuracy()
+    elif loss == "sigmoid":
+        return SigmoidLoss(), AccuracyCE()
     elif loss == "ce":
         return nn.CrossEntropyLoss(reduction='sum'), AccuracyCE()
     raise NotImplementedError(f"no such loss function: {loss}")
@@ -92,15 +99,16 @@ def get_loss_and_acc(loss: str):
 def compute_hvp(network: nn.Module, loss_fn: nn.Module,
                 dataset: Dataset, vector: Tensor, physical_batch_size: int = DEFAULT_PHYS_BS):
     """Compute a Hessian-vector product."""
-    p = len(parameters_to_vector(network.parameters()))
+    # p = len(parameters_to_vector(network.parameters()))
+    p = len(parameters_to_vector(filter(lambda z: z.requires_grad, network.parameters())))
     n = len(dataset)
     hvp = torch.zeros(p, dtype=torch.float, device='cuda')
     vector = vector.cuda()
     for (X, y) in iterate_dataset(dataset, physical_batch_size):
         loss = loss_fn(network(X), y) / n
-        grads = torch.autograd.grad(loss, inputs=network.parameters(), create_graph=True)
+        grads = torch.autograd.grad(loss, inputs=filter(lambda z: z.requires_grad, network.parameters()), create_graph=True)
         dot = parameters_to_vector(grads).mul(vector).sum()
-        grads = [g.contiguous() for g in torch.autograd.grad(dot, network.parameters(), retain_graph=True)]
+        grads = [g.contiguous() for g in torch.autograd.grad(dot, filter(lambda z: z.requires_grad, network.parameters()), retain_graph=True)]
         hvp += parameters_to_vector(grads)
     return hvp
 
@@ -124,7 +132,8 @@ def get_hessian_eigenvalues(network: nn.Module, loss_fn: nn.Module, dataset: Dat
     """ Compute the leading Hessian eigenvalues. """
     hvp_delta = lambda delta: compute_hvp(network, loss_fn, dataset,
                                           delta, physical_batch_size=physical_batch_size).detach().cpu()
-    nparams = len(parameters_to_vector((network.parameters())))
+    # nparams = len(parameters_to_vector((network.parameters())))
+    nparams = len(parameters_to_vector((filter(lambda p: p.requires_grad, network.parameters()))))
     evals, evecs = lanczos(hvp_delta, nparams, neigs=neigs)
     return evals
 
@@ -132,11 +141,11 @@ def get_hessian_eigenvalues(network: nn.Module, loss_fn: nn.Module, dataset: Dat
 def compute_gradient(network: nn.Module, loss_fn: nn.Module,
                      dataset: Dataset, physical_batch_size: int = DEFAULT_PHYS_BS):
     """ Compute the gradient of the loss function at the current network parameters. """
-    p = len(parameters_to_vector(network.parameters()))
+    p = len(parameters_to_vector(filter(lambda z: z.requires_grad, network.parameters())))
     average_gradient = torch.zeros(p, device='cuda')
     for (X, y) in iterate_dataset(dataset, physical_batch_size):
         batch_loss = loss_fn(network(X), y) / len(dataset)
-        batch_gradient = parameters_to_vector(torch.autograd.grad(batch_loss, inputs=network.parameters()))
+        batch_gradient = parameters_to_vector(torch.autograd.grad(batch_loss, inputs=filter(lambda z: z.requires_grad, network.parameters())))
         average_gradient += batch_gradient
     return average_gradient
 
@@ -184,6 +193,11 @@ class SquaredAccuracy(nn.Module):
     def forward(self, input, target):
         return (input.argmax(1) == target.argmax(1)).float().sum()
 
+class SigmoidLoss(nn.Module):
+    def forward(self, input: Tensor, target: Tensor) -> Tensor:
+        sigmoid = torch.sigmoid(input)
+        log_sigmoid = torch.log(sigmoid)
+        return F.nll_loss(log_sigmoid, target, reduction='sum')
 
 class AccuracyCE(nn.Module):
     def __init__(self):

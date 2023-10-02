@@ -34,6 +34,10 @@ def make_labels(y, loss):
         return y
     elif loss == "mse":
         return _one_hot(y, 10, 0)
+    elif loss == "huber":
+        return _one_hot(y, 10, 0)
+    elif loss == "sigmoid":
+        return y
 
 
 def load_cifar(loss: str) -> (TensorDataset, TensorDataset):
