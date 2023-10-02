@@ -227,7 +227,7 @@ lr_list_huber_cubicrelu = {
 #     "w1_6_w2_15": [0.00006, 0.00009],
 #     }
 lr_list_mse_cubicrelu_outer = {
-    "w1_6_w2_20": [0.000005, 0.00001, 0.00005],
+    "w1_6_w2_20": [0.001, 0.002, 0.003],
     }
 lr_list_huber_cubicrelu_outer = {
     "w1_6_w2_20": [0.001, 0.002, 0.005],
