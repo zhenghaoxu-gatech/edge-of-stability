@@ -6,3 +6,5 @@ demo.py
 .idea
 __pycache__/
 dataset/
+/*.md
+/*.xlsx
