@@ -264,7 +264,7 @@ for weight in ["w1_3_w2_10"]:
 
     # for lr in lr_list_huber_cubicrelu_outer[weight]:
     for lr in [0.000016]:
-        os.system(f"python src/gd.py cifar10-1k fc-cubic_relu-outer  huber {lr} 200000 --neigs 1  --eig_freq 40 --width 200 --init_weight {weight}")  
+        os.system(f"python src/gd.py cifar10-1k fc-cubic_relu-outer  huber {lr} 200000 --neigs 1  --eig_freq 400 --width 200 --init_weight {weight}")  
 
 '''
 Extension
