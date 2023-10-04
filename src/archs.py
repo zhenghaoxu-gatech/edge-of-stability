@@ -106,7 +106,7 @@ def cubic_net_outer(dataset_name: str, widths: List[int], activation: str, bias:
     modules.append(nn.Linear(widths[-1], num_classes(dataset_name), bias=bias))
     
     if batch_norm: 
-        modules.append(nn.BatchNorm1d(num_features=widths[l], affine=False))
+        modules.append(nn.BatchNorm1d(num_features=num_classes(dataset_name), affine=False))
         
     modules.append(get_activation(activation))
     lastlayer = nn.Linear(num_classes(dataset_name), num_classes(dataset_name), bias=bias)
