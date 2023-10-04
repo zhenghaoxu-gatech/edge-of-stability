@@ -99,10 +99,17 @@ def cubic_net_outer(dataset_name: str, widths: List[int], activation: str, bias:
     modules = [nn.Flatten()]
     for l in range(len(widths)):
         prev_width = widths[l - 1] if l > 0 else num_pixels(dataset_name)
-        modules.extend([
-            nn.Linear(prev_width, widths[l], bias=bias),
-            nn.Identity()
-        ])
+        if batch_norm: 
+            modules.extend([
+                nn.Linear(prev_width, widths[l], bias=bias),
+                nn.Identity(),
+                nn.Identity()
+            ])
+        else: 
+            modules.extend([
+                nn.Linear(prev_width, widths[l], bias=bias),
+                nn.Identity()
+            ])
     modules.append(nn.Linear(widths[-1], num_classes(dataset_name), bias=bias))
     
     if batch_norm: 
