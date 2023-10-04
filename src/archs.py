@@ -99,18 +99,15 @@ def cubic_net_outer(dataset_name: str, widths: List[int], activation: str, bias:
     modules = [nn.Flatten()]
     for l in range(len(widths)):
         prev_width = widths[l - 1] if l > 0 else num_pixels(dataset_name)
-        if batch_norm:
-            modules.extend([
-                nn.Linear(prev_width, widths[l], bias=bias),
-                nn.BatchNorm1d(num_features=widths[l], affine=False),
-                nn.Identity()
-            ])
-        else:
-            modules.extend([
-                nn.Linear(prev_width, widths[l], bias=bias),
-                nn.Identity()
-            ])
+        modules.extend([
+            nn.Linear(prev_width, widths[l], bias=bias),
+            nn.Identity()
+        ])
     modules.append(nn.Linear(widths[-1], num_classes(dataset_name), bias=bias))
+    
+    if batch_norm: 
+        modules.append(nn.BatchNorm1d(num_features=widths[l], affine=False))
+        
     modules.append(get_activation(activation))
     lastlayer = nn.Linear(num_classes(dataset_name), num_classes(dataset_name), bias=bias)
     torch.nn.init.constant_(lastlayer.weight, 0.5)
