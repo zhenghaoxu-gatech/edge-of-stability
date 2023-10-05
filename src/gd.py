@@ -19,9 +19,9 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 def main(dataset: str, arch_id: str, loss: str, opt: str, lr: float, max_steps: int, neigs: int = 0,
          physical_batch_size: int = 1000, eig_freq: int = -1, iterate_freq: int = -1, save_freq: int = -1,
          save_model: bool = False, beta: float = 0.0, nproj: int = 0,
-         loss_goal: float = None, acc_goal: float = None, abridged_size: int = 5000, seed: int = 0, width: int = 200, bias: bool = True, init_bias: str = "b_init", init_weight: str = "w_init", batch_norm: bool = False):
+         loss_goal: float = None, acc_goal: float = None, abridged_size: int = 5000, seed: int = 0, width: int = 200, bias: bool = True, init_bias: str = "b_init", init_weight: str = "w_init", batch_norm: bool = False, layer_norm: bool = False):
     directory = get_gd_directory(dataset, lr, arch_id, seed, opt, loss, beta, 
-                                 width=width, bias=bias, init_bias=init_bias, init_weight=init_weight, batch_norm=batch_norm)
+                                 width=width, bias=bias, init_bias=init_bias, init_weight=init_weight, batch_norm=batch_norm, layer_norm=layer_norm)
     print(f"output directory: {directory}")
     makedirs(directory, exist_ok=True)
 
@@ -31,10 +31,10 @@ def main(dataset: str, arch_id: str, loss: str, opt: str, lr: float, max_steps: 
     loss_fn, acc_fn = get_loss_and_acc(loss)
 
     torch.manual_seed(seed)
-    network = load_architecture(arch_id, dataset, width=width, bias=bias, batch_norm=batch_norm)
+    network = load_architecture(arch_id, dataset, width=width, bias=bias, batch_norm=batch_norm, layer_norm=layer_norm)
 
     model_path = get_gd_directory(dataset, lr, arch_id, seed, opt+"_model", loss, beta, 
-                                 width=width, bias=bias, init_bias=init_bias, init_weight=init_weight, batch_norm=batch_norm)+"/initial.pth"
+                                 width=width, bias=bias, init_bias=init_bias, init_weight=init_weight, batch_norm=batch_norm, layer_norm=layer_norm)+"/initial.pth"
     
     if not os.path.exists(model_path):
         torch.save(network.state_dict(), model_path)
@@ -49,14 +49,14 @@ def main(dataset: str, arch_id: str, loss: str, opt: str, lr: float, max_steps: 
             b2 = init_bias.split('_')[3] 
             if idx == '1':
                 parameters.data = parameters.data / parameters.norm().item() * float(b1)
-            if idx == ('4' if batch_norm else '3'):
+            if idx == ('4' if (batch_norm or layer_norm) else '3'):
                 parameters.data = parameters.data / parameters.norm().item() * float(b2)
         if label == 'weight' and init_weight != "w_init": 
             w1 = init_weight.split('_')[1] 
             w2 = init_weight.split('_')[3] 
             if idx == '1':
                 parameters.data = parameters.data / parameters.norm().item() * float(w1)
-            if idx == ('4' if batch_norm else '3'):
+            if idx == ('4' if (batch_norm or layer_norm) else '3'):
                 parameters.data = parameters.data / parameters.norm().item() * float(w2)
         print(name, ':', parameters.size(), ':', parameters.norm().item())
     # exit()
@@ -90,7 +90,7 @@ def main(dataset: str, arch_id: str, loss: str, opt: str, lr: float, max_steps: 
                     if label == 'weight': 
                         if idx == '1':
                             w1_list[step // eig_freq] = parameters.norm()
-                        if idx == ('4' if batch_norm else '3'):
+                        if idx == ('4' if (batch_norm or layer_norm) else '3'):
                             w2_list[step // eig_freq] = parameters.norm()
             if step == 0:
                 print("eigenvalues: ", eigs[step//eig_freq, :], "\t w1: ", w1_list[step // eig_freq], "\t w2: ", w2_list[step // eig_freq])
@@ -159,6 +159,8 @@ if __name__ == "__main__":
                         help="if 'true', save model weights at end of training")
     parser.add_argument("--batch_norm", action="store_true",
                         help="if 'true', use batch normalization")
+    parser.add_argument("--layer_norm", action="store_true",
+                        help="if 'true', use layer normalization")
     parser.add_argument("--width", type=int, default=200,
                         help="the width of the neural networks")
     parser.add_argument("--bias", action="store_true",
@@ -176,4 +178,4 @@ if __name__ == "__main__":
          iterate_freq=args.iterate_freq, save_freq=args.save_freq, save_model=args.save_model, beta=args.beta,
          nproj=args.nproj, loss_goal=args.loss_goal, acc_goal=args.acc_goal, abridged_size=args.abridged_size,
          seed=args.seed, 
-         width=args.width, bias=args.bias, init_bias=args.init_bias, init_weight=args.init_weight, batch_norm=args.batch_norm)
+         width=args.width, bias=args.bias, init_bias=args.init_bias, init_weight=args.init_weight, batch_norm=args.batch_norm, layer_norm=args.layer_norm)

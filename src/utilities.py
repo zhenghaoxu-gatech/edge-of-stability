@@ -18,11 +18,15 @@ RESULTS_DIR = "./results/"
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-def get_gd_directory(dataset: str, lr: float, arch_id: str, seed: int, opt: str, loss: str, beta: float = None, width: int = 200, bias: bool = True, init_bias: str = "b_init", init_weight: str = "w_init", batch_norm: bool = False):
+def get_gd_directory(dataset: str, lr: float, arch_id: str, seed: int, opt: str, loss: str, beta: float = None, width: int = 200, bias: bool = True, init_bias: str = "b_init", init_weight: str = "w_init", batch_norm: bool = False, layer_norm: bool = False):
     """Return the directory in which the results should be saved."""
     # results_dir = os.environ["RESULTS"]
     results_dir = RESULTS_DIR
-    directory = f"{results_dir}/{dataset}/{arch_id}/seed_{seed}/{loss}" if not batch_norm else f"{results_dir}/{dataset}/{arch_id}_BN/seed_{seed}/{loss}"
+    directory = f"{results_dir}/{dataset}/{arch_id}/seed_{seed}/{loss}" 
+    if batch_norm: 
+        directory = f"{results_dir}/{dataset}/{arch_id}_BN/seed_{seed}/{loss}"
+    if layer_norm: 
+        directory = f"{results_dir}/{dataset}/{arch_id}_LN/seed_{seed}/{loss}"
     if opt == "gd":
         return f"{directory}/gd/width_{width}_{init_weight}_{init_bias if bias else 'nobias'}/lr_{lr}"
     elif opt == "gd_model":
