@@ -109,9 +109,9 @@ def main(dataset: str, arch_id: str, loss: str, opt: str, lr: float, max_steps: 
 
         if (loss_goal != None and train_loss[step] < loss_goal) or (acc_goal != None and train_acc[step] > acc_goal):
             break
-            # if train_loss[step] >` 1e6 and step >= 10:
-            #     print('Diverge!')
-            #     break`
+        if train_loss[step] > 1e6 and step >= 4000:
+            print('Diverge!')
+            break
 
         optimizer.zero_grad()
         for (X, y) in iterate_dataset(train_dataset, physical_batch_size):
