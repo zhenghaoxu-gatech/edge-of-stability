@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for weight in "w1_9_w2_40"
+for weight in "w1_7_w2_40"
 do
     for lr in 0.001 0.003 0.005 0.007 0.009
     do
